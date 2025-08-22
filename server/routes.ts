@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema } from "@shared/schema";
+import { insertUserSchema, loginSchema, insertProjectSchema, insertTaskSchema } from "@shared/schema";
 import { z } from "zod";
 import MemoryStore from "memorystore";
 
@@ -116,10 +116,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({
       user: {
         id: user.id,
+        name: user.name,
         email: user.email,
         role: user.role,
+        rank: user.rank,
+        specialization: user.specialization,
       },
     });
+  });
+
+  // Projects routes
+  app.get("/api/projects", async (req, res) => {
+    if (!req.session.userId || !req.session.userRole) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const projects = await storage.getProjectsForUser(req.session.userId, req.session.userRole);
+      res.json({ projects });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch projects" });
+    }
+  });
+
+  app.post("/api/projects", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "PM") {
+      return res.status(403).json({ message: "Only PMs can create projects" });
+    }
+
+    try {
+      const validatedData = insertProjectSchema.parse(req.body);
+      const project = await storage.createProject(validatedData);
+      res.status(201).json({ project });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Failed to create project" });
+    }
+  });
+
+  // Tasks routes
+  app.get("/api/projects/:projectId/tasks", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const { projectId } = req.params;
+      const tasks = await storage.getTasksForProject(projectId);
+      
+      // Role-based filtering
+      if (req.session.userRole === "Team") {
+        // Team members only see tasks assigned to them
+        const filteredTasks = tasks.filter(task => task.assignedTo === req.session.userId);
+        return res.json({ tasks: filteredTasks });
+      }
+      
+      // PMs see all tasks in their projects
+      res.json({ tasks });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  app.get("/api/tasks/my", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const tasks = await storage.getTasksForUser(req.session.userId);
+      res.json({ tasks });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  app.post("/api/tasks", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "PM") {
+      return res.status(403).json({ message: "Only PMs can create tasks" });
+    }
+
+    try {
+      const validatedData = insertTaskSchema.parse(req.body);
+      const task = await storage.createTask(validatedData);
+      res.status(201).json({ task });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Failed to create task" });
+    }
+  });
+
+  app.patch("/api/tasks/:taskId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const { taskId } = req.params;
+      const task = await storage.getTask(taskId);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Check permissions
+      const canUpdate = req.session.userRole === "PM" || task.assignedTo === req.session.userId;
+      if (!canUpdate) {
+        return res.status(403).json({ message: "Not authorized to update this task" });
+      }
+
+      const updatedTask = await storage.updateTask(taskId, req.body);
+      res.json({ task: updatedTask });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update task" });
+    }
   });
 
   const httpServer = createServer(app);

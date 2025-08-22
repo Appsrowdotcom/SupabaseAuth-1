@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProjectList } from "@/components/projects/ProjectList";
 import { CheckCircle2, BarChart3, Users, LogOut } from "lucide-react";
 
 export default function PMDashboard() {
@@ -110,22 +111,10 @@ export default function PMDashboard() {
           </Card>
         </div>
 
-        {/* Recent Projects */}
-        <Card className="border border-slate-200 mb-8">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-800">Recent Projects</h2>
-          </div>
-          <CardContent className="p-6">
-            <div className="text-center py-12" data-testid="empty-projects">
-              <CheckCircle2 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No projects yet</h3>
-              <p className="text-slate-600 mb-4">Get started by creating your first project.</p>
-              <Button data-testid="button-create-project" className="bg-primary hover:bg-blue-600">
-                Create Project
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Projects Section */}
+        <div className="mb-8">
+          <ProjectList />
+        </div>
 
         {/* Team Management */}
         <Card className="border border-slate-200">

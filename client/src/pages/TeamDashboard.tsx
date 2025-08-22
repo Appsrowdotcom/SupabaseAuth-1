@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProjectList } from "@/components/projects/ProjectList";
 import { CheckCircle2, Clock, AlertTriangle, ListTodo, LogOut } from "lucide-react";
 
 export default function TeamDashboard() {
@@ -128,45 +129,10 @@ export default function TeamDashboard() {
           </Card>
         </div>
 
-        {/* Current Tasks */}
-        <Card className="border border-slate-200 mb-8">
-          <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-800">My Tasks</h2>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                data-testid="filter-all"
-                className="px-3 py-1 text-sm bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors"
-              >
-                All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                data-testid="filter-open"
-                className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors"
-              >
-                Open
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                data-testid="filter-completed"
-                className="px-3 py-1 text-sm bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors"
-              >
-                Completed
-              </Button>
-            </div>
-          </div>
-          <CardContent className="p-6">
-            <div className="text-center py-12" data-testid="empty-tasks">
-              <ListTodo className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No tasks assigned</h3>
-              <p className="text-slate-600">You don't have any tasks assigned yet. Check back later or contact your project manager.</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Projects and Tasks Section */}
+        <div className="mb-8">
+          <ProjectList />
+        </div>
 
         {/* Recent Activity */}
         <Card className="border border-slate-200">
