@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,9 @@ import {
   FolderOpen, 
   User,
   Clock,
-  AlertCircle
+  AlertCircle,
+  ArrowRight,
+  Settings
 } from "lucide-react";
 import { Project, Task } from "@shared/schema";
 import { format } from "date-fns";
@@ -23,6 +26,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [, setLocation] = useLocation();
 
   const { data: tasksData, isLoading: tasksLoading } = useQuery({
     queryKey: ["/api/projects", project.id, "tasks"],
@@ -119,8 +123,25 @@ export function ProjectCard({ project }: ProjectCardProps) {
                   </div>
                 )}
 
-                <div className="text-xs text-slate-500">
-                  Created {format(new Date(project.createdAt || new Date()), "MMM d, yyyy")}
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    Created {format(new Date(project.createdAt || new Date()), "MMM d, yyyy")}
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation(`/projects/${project.id}/tasks`);
+                    }}
+                    className="text-primary hover:text-blue-600"
+                    data-testid={`manage-tasks-${project.id}`}
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Manage Tasks
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
                 </div>
               </div>
             </div>

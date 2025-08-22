@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ProjectCard } from "./ProjectCard";
-import { Loader2, FolderOpen, Filter } from "lucide-react";
+import { Loader2, FolderOpen, Filter, Plus, ArrowRight } from "lucide-react";
 import { Project, ProjectStatus } from "@shared/schema";
 
-export function ProjectList() {
+interface ProjectListProps {
+  showCreateButton?: boolean;
+}
+
+export function ProjectList({ showCreateButton = false }: ProjectListProps) {
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
+  const [, setLocation] = useLocation();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["/api/projects"],
@@ -64,7 +70,7 @@ export function ProjectList() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Filter */}
+      {/* Header with Filter and Create Button */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800" data-testid="projects-title">
@@ -76,6 +82,16 @@ export function ProjectList() {
         </div>
         
         <div className="flex items-center space-x-3">
+          {showCreateButton && (
+            <Button 
+              onClick={() => setLocation("/projects/new")}
+              className="bg-primary hover:bg-blue-600"
+              data-testid="button-create-project"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Project
+            </Button>
+          )}
           <Filter className="h-4 w-4 text-slate-500" />
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ProjectStatus | "all")}>
             <SelectTrigger className="w-40" data-testid="filter-status">

@@ -65,7 +65,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects List */}
-      <ProjectList />
+      <ProjectList showCreateButton={true} />
     </div>
   );
 }
