@@ -236,6 +236,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/tasks/:taskId", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "PM") {
+      return res.status(403).json({ message: "Only PMs can delete tasks" });
+    }
+
+    try {
+      const { taskId } = req.params;
+      const deleted = await storage.deleteTask(taskId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json({ message: "Task deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete task" });
+    }
+  });
+
+  app.get("/api/users", async (req, res) => {
+    if (!req.session.userId || req.session.userRole !== "PM") {
+      return res.status(403).json({ message: "Only PMs can fetch user list" });
+    }
+
+    try {
+      const users = await storage.getAllUsers();
+      res.json({ users });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

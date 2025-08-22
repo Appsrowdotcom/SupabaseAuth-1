@@ -8,6 +8,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   validateUser(email: string, password: string): Promise<User | null>;
+  getAllUsers(): Promise<User[]>;
   
   // Project methods
   getProject(id: string): Promise<Project | undefined>;
@@ -21,6 +22,7 @@ export interface IStorage {
   getTasksForUser(userId: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: string, updates: Partial<Task>): Promise<Task | undefined>;
+  deleteTask(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -254,6 +256,14 @@ export class MemStorage implements IStorage {
     const updatedTask = { ...task, ...updates };
     this.tasks.set(id, updatedTask);
     return updatedTask;
+  }
+
+  async deleteTask(id: string): Promise<boolean> {
+    return this.tasks.delete(id);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
 }
 
