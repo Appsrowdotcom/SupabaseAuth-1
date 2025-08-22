@@ -2,10 +2,12 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectList } from "@/components/projects/ProjectList";
-import { CheckCircle2, BarChart3, Users, LogOut } from "lucide-react";
+import { useLocation } from "wouter";
+import { CheckCircle2, BarChart3, Users, LogOut, Plus } from "lucide-react";
 
 export default function PMDashboard() {
   const { user, signOut } = useAuth();
+  const [, setLocation] = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -113,7 +115,28 @@ export default function PMDashboard() {
 
         {/* Projects Section */}
         <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-slate-800">Recent Projects</h2>
+            <Button 
+              onClick={() => setLocation("/projects/new")}
+              className="bg-primary hover:bg-blue-600"
+              data-testid="button-create-project"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Project
+            </Button>
+          </div>
           <ProjectList />
+          
+          <div className="mt-4 text-center">
+            <Button 
+              variant="outline"
+              onClick={() => setLocation("/projects")}
+              data-testid="button-view-all-projects"
+            >
+              View All Projects
+            </Button>
+          </div>
         </div>
 
         {/* Team Management */}

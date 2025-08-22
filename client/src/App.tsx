@@ -8,6 +8,8 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Login from "@/pages/Login";
 import PMDashboard from "@/pages/PMDashboard";
 import TeamDashboard from "@/pages/TeamDashboard";
+import ProjectsPage from "@/pages/ProjectsPage";
+import { ProjectCreationForm } from "@/components/projects/ProjectCreationForm";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -40,6 +42,16 @@ function AppRouter() {
       <Route path="/team-dashboard">
         <ProtectedRoute allowedRoles={["Team"]}>
           <TeamDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/projects">
+        <ProtectedRoute allowedRoles={["PM"]}>
+          <ProjectsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/projects/new">
+        <ProtectedRoute allowedRoles={["PM"]}>
+          <ProjectCreationForm />
         </ProtectedRoute>
       </Route>
       <Route path="/">
