@@ -33,6 +33,8 @@ export class MemStorage implements IStorage {
       ...insertUser,
       id,
       password: hashedPassword,
+      rank: insertUser.rank || null,
+      specialization: insertUser.specialization || null,
       createdAt: new Date(),
     };
     this.users.set(id, user);

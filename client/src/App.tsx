@@ -33,17 +33,17 @@ function AppRouter() {
   return (
     <Switch>
       <Route path="/pm-dashboard">
-        <ProtectedRoute allowedRoles={["pm"]}>
+        <ProtectedRoute allowedRoles={["PM"]}>
           <PMDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/team-dashboard">
-        <ProtectedRoute allowedRoles={["team_member"]}>
+        <ProtectedRoute allowedRoles={["Team"]}>
           <TeamDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/">
-        {user.role === "pm" ? <PMDashboard /> : <TeamDashboard />}
+        {user.role === "PM" ? <PMDashboard /> : <TeamDashboard />}
       </Route>
       <Route component={NotFound} />
     </Switch>

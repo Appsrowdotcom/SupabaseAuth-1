@@ -8,13 +8,13 @@ export const supabaseConfig = {
 
 // Helper functions for our API-based auth
 export const authAPI = {
-  signUp: async (email: string, password: string, role: string) => {
+  signUp: async (email: string, password: string, role: string, name: string, rank?: string, specialization?: string) => {
     const response = await fetch("/api/auth/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password, role }),
+      body: JSON.stringify({ email, password, role, name, rank, specialization }),
       credentials: "include",
     });
 

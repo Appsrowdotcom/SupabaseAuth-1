@@ -21,10 +21,13 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
       role: undefined,
+      rank: "",
+      specialization: "",
     },
   });
 
@@ -33,7 +36,14 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
     setError("");
 
     try {
-      await signUp(data.email, data.password, data.role);
+      await signUp(
+        data.email, 
+        data.password, 
+        data.role, 
+        data.name, 
+        data.rank || undefined, 
+        data.specialization || undefined
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
     } finally {
@@ -56,6 +66,25 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
           <CardContent className="pt-6">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="signup-name" className="block text-sm font-medium text-slate-700 mb-1">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    data-testid="input-signup-name"
+                    {...form.register("name")}
+                    className="appearance-none relative block w-full px-3 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm transition-colors duration-200"
+                    placeholder="Enter your full name"
+                  />
+                  {form.formState.errors.name && (
+                    <p className="mt-1 text-sm text-red-600" data-testid="error-signup-name">
+                      {form.formState.errors.name.message}
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <Label htmlFor="signup-email" className="block text-sm font-medium text-slate-700 mb-1">
                     Email address
@@ -117,18 +146,56 @@ export function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void })
                   <Label htmlFor="role" className="block text-sm font-medium text-slate-700 mb-1">
                     Role
                   </Label>
-                  <Select onValueChange={(value) => form.setValue("role", value as "pm" | "team_member")}>
+                  <Select onValueChange={(value) => form.setValue("role", value as "PM" | "Team")}>
                     <SelectTrigger data-testid="select-role" className="appearance-none relative block w-full px-3 py-3 border border-slate-300 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm transition-colors duration-200">
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pm" data-testid="option-pm">Project Manager</SelectItem>
-                      <SelectItem value="team_member" data-testid="option-team-member">Team Member</SelectItem>
+                      <SelectItem value="PM" data-testid="option-pm">Project Manager</SelectItem>
+                      <SelectItem value="Team" data-testid="option-team-member">Team Member</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.formState.errors.role && (
                     <p className="mt-1 text-sm text-red-600" data-testid="error-role">
                       {form.formState.errors.role.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="rank" className="block text-sm font-medium text-slate-700 mb-1">
+                    Rank (Optional)
+                  </Label>
+                  <Input
+                    id="rank"
+                    type="text"
+                    data-testid="input-rank"
+                    {...form.register("rank")}
+                    className="appearance-none relative block w-full px-3 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm transition-colors duration-200"
+                    placeholder="e.g., Senior, Lead, Junior"
+                  />
+                  {form.formState.errors.rank && (
+                    <p className="mt-1 text-sm text-red-600" data-testid="error-rank">
+                      {form.formState.errors.rank.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="specialization" className="block text-sm font-medium text-slate-700 mb-1">
+                    Specialization (Optional)
+                  </Label>
+                  <Input
+                    id="specialization"
+                    type="text"
+                    data-testid="input-specialization"
+                    {...form.register("specialization")}
+                    className="appearance-none relative block w-full px-3 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm transition-colors duration-200"
+                    placeholder="e.g., Frontend, Backend, Design, SEO"
+                  />
+                  {form.formState.errors.specialization && (
+                    <p className="mt-1 text-sm text-red-600" data-testid="error-specialization">
+                      {form.formState.errors.specialization.message}
                     </p>
                   )}
                 </div>
