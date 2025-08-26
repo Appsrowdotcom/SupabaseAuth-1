@@ -16,35 +16,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initial session check and profile fetch
     checkUser();
-    
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          // Get user profile data from our users table
-          const { data: profile, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.error('Error fetching user profile:', error);
-            // If profile doesn't exist, sign out the user
-            await supabase.auth.signOut();
-            setUser(null);
-          } else if (profile) {
-            setUser(profile);
-          }
-        } else {
-          setUser(null);
-        }
+
+    // Listen for auth changes; only update from session and let checkUser handle profile fetch
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!session?.user) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      // Minimal optimistic update: keep current user if same id; otherwise re-check profile
+      if (!user || user.id !== session.user.id) {
+        await checkUser();
+      } else {
         setLoading(false);
       }
-    );
+    });
 
-    return () => subscription.unsubscribe();
+    // Safety net: if something stalls, clear loading after 5 seconds
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkUser = async () => {
@@ -58,8 +56,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
         
         if (error) {
-          console.error('Error checking user:', error);
-          setUser(null);
+          // If profile is missing, try to create it on-the-fly (first login)
+          const fallbackName = (session.user.user_metadata?.full_name as string | undefined)
+            || (session.user.email?.split('@')[0] ?? 'User');
+          const { error: insertError, data: inserted } = await supabase
+            .from('users')
+            .insert({
+              id: session.user.id,
+              name: fallbackName,
+              email: session.user.email,
+              role: 'User',
+            })
+            .select('*')
+            .single();
+          if (!insertError && inserted) {
+            setUser(inserted as any);
+          } else {
+            // Surface but don't block UI
+            console.error('Error creating missing profile:', insertError || error);
+            setUser(null);
+          }
         } else if (profile) {
           setUser(profile);
         }
@@ -81,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       throw error;
     }
+    // Ensure profile exists after sign-in
+    await checkUser();
   };
 
   const signUp = async (email: string, password: string, role: string, name: string, rank?: string, specialization?: string) => {
@@ -91,6 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) {
+      // Provide a clearer message for common duplicate-email case
+      if ((error as any).status === 400) {
+        throw new Error('This email is already registered. Try signing in.');
+      }
       throw error;
     }
 
@@ -108,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       
       if (profileError) {
-        throw profileError;
+        throw new Error(profileError.message || 'Failed to create user profile.');
       }
     }
   };

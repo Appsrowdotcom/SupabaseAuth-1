@@ -1,9 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://hntwxvzuothnkhtahmoz.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudHd4dnp1b3RobmtodGFobW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4NTkzMTUsImV4cCI6MjA3MTQzNTMxNX0.sgxhv2tc0KWo_cx6eEWgUKBm7MI1sF3qJ_A5GbCT9nA'
+// Read credentials from Vite environment variables.
+// Define in project-root .env/.env.local as:
+// VITE_SUPABASE_URL=...
+// VITE_SUPABASE_ANON_KEY=...
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Surface a clear error in the console if env vars are missing
+  // so the app doesn't appear to be stuck on a loading spinner.
+  // The rest of the app guards will handle absence gracefully.
+  // eslint-disable-next-line no-console
+  console.error('Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env.local')
+}
+
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
 
 // Types matching the exact database schema
 export interface User {
@@ -20,7 +32,7 @@ export interface Project {
   id: string
   name: string
   type: string
-  status: 'In Progress' | 'On Hold' | 'Completed'
+  status: 'In Progress' | 'On Hold' | 'Completed' | 'Archived'
   admin_id: string
   created_at: string
   deadline?: string

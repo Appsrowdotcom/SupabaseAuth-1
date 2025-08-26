@@ -13,6 +13,8 @@ import {
   Pause,
   Square
 } from "lucide-react";
+import { UserAssignedTasks } from "@/components/tasks/UserAssignedTasks";
+import { UserWorkLogHistory } from "@/components/tasks/UserWorkLogHistory";
 
 export default function UserDashboard() {
   const { user, signOut } = useAuth();
@@ -30,8 +32,8 @@ export default function UserDashboard() {
     }
   };
 
-  const toggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
+  const handleTimerChanged = (active: boolean) => {
+    setIsTimerRunning(active);
   };
 
   return (
@@ -137,81 +139,10 @@ export default function UserDashboard() {
           </Card>
         </div>
 
-        {/* Timer and Quick Actions */}
+        {/* Assigned Tasks and Work Logs */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Work Timer */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Work Timer
-              </CardTitle>
-              <CardDescription>
-                Track your work sessions and log time spent on tasks
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="text-4xl font-mono font-bold text-slate-900 mb-4">
-                  00:00:00
-                </div>
-                <div className="flex justify-center space-x-2">
-                  <Button
-                    onClick={toggleTimer}
-                    variant={isTimerRunning ? "outline" : "default"}
-                    className="flex items-center gap-2"
-                  >
-                    {isTimerRunning ? (
-                      <>
-                        <Pause className="h-4 w-4" />
-                        Pause
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4" />
-                        Start
-                      </>
-                    )}
-                  </Button>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Square className="h-4 w-4" />
-                    Stop
-                  </Button>
-                </div>
-              </div>
-              <div className="text-center text-sm text-slate-500">
-                <p>Currently working on: <span className="font-medium">E-commerce Redesign - Frontend</span></p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Common tasks and shortcuts for your daily work
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full justify-start" variant="outline">
-                <Clock className="mr-2 h-4 w-4" />
-                Start Work Session
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Mark Task Complete
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <AlertCircle className="mr-2 h-4 w-4" />
-                Report Issue
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <User className="mr-2 h-4 w-4" />
-                Update Profile
-              </Button>
-            </CardContent>
-          </Card>
+          <UserAssignedTasks onTimerChanged={handleTimerChanged} />
+          <UserWorkLogHistory />
         </div>
 
         {/* My Tasks */}

@@ -58,6 +58,7 @@ export function TaskList({ projectId, refreshKey = 0 }: TaskListProps) {
   const editForm = useForm<TaskUpdateData>({ resolver: zodResolver(taskUpdateSchema) });
 
   // Preload users so we can show names in the table and in selects
+  // CRUD: read from 'users' to populate assignment options and name lookups.
   useEffect(() => {
     const loadUsers = async () => {
       const { data, error } = await supabase
@@ -73,6 +74,7 @@ export function TaskList({ projectId, refreshKey = 0 }: TaskListProps) {
   const usersById = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
 
   // Fetch tasks linked to this project_id from Supabase
+  // Project/task linkage: we filter by project_id to only load tasks for the current project.
   const fetchTasks = async () => {
     try {
       setIsLoading(true);
@@ -104,7 +106,31 @@ export function TaskList({ projectId, refreshKey = 0 }: TaskListProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, usersById, refreshKey]);
 
+  // Real-time updates: subscribe to INSERT/UPDATE/DELETE on tasks for this project
+  // so the list reacts when other admins add or change tasks.
+  useEffect(() => {
+    if (!projectId) return;
+    const channel = supabase
+      .channel(`tasks-project-${projectId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${projectId}` },
+        () => {
+          // Simple strategy: re-fetch to keep logic consistent
+          fetchTasks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
   // Open edit dialog and prefill with selected task values
+  // When an admin clicks Edit, pre-fill the form with the current task values
+  // for a smooth editing experience.
   const openEdit = (task: Task) => {
     setEditingTask(task);
     editForm.reset({
@@ -117,6 +143,7 @@ export function TaskList({ projectId, refreshKey = 0 }: TaskListProps) {
     setIsEditDialogOpen(true);
   };
 
+  // Persist edits to Supabase and refresh list
   // Persist edits to Supabase and refresh list
   const submitEdit = async (values: TaskUpdateData) => {
     // Role guard: only Admin can edit
@@ -151,6 +178,7 @@ export function TaskList({ projectId, refreshKey = 0 }: TaskListProps) {
   };
 
   // Confirm and delete a task (critical change) with dialog
+  // Confirm and delete a task, then refresh the list.
   const confirmDelete = async () => {
     // Role guard: only Admin can delete
     if (!user || user.role !== "Admin") {

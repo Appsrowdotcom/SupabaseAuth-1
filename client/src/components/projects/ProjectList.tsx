@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  FolderOpen, 
-  Edit, 
-  Archive, 
-  Eye, 
-  Loader2, 
-  AlertCircle, 
+import {
+  FolderOpen,
+  Edit,
+  Archive,
+  Eye,
+  Loader2,
+  AlertCircle,
   CheckCircle2,
   Plus,
   Calendar,
@@ -44,6 +44,9 @@ const PROJECT_TYPES = [
 ];
 
 const PROJECT_STATUSES = ["In Progress", "On Hold", "Completed", "Archived"];
+
+// Statuses where archiving is allowed
+const ARCHIVABLE_STATUSES: Array<Project["status"]> = ["In Progress", "On Hold"];
 
 interface ProjectListProps {
   onProjectUpdated?: () => void; // Callback to refresh data
@@ -144,7 +147,7 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
       setIsEditDialogOpen(false);
       setEditingProject(null);
       fetchProjects();
-      
+
       // Call callback if provided
       if (onProjectUpdated) {
         onProjectUpdated();
@@ -186,7 +189,7 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
       setIsArchiveDialogOpen(false);
       setProjectToArchive(null);
       fetchProjects();
-      
+
       // Call callback if provided
       if (onProjectUpdated) {
         onProjectUpdated();
@@ -221,12 +224,12 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
   // Check if deadline is approaching or overdue
   const getDeadlineStatus = (deadline: string | null) => {
     if (!deadline) return null;
-    
+
     const today = new Date();
     const deadlineDate = new Date(deadline);
     const diffTime = deadlineDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return "overdue";
     if (diffDays <= 7) return "approaching";
     return "normal";
@@ -250,16 +253,7 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">My Projects</h2>
-          <p className="text-slate-600">Manage and track all your active projects</p>
-        </div>
-        <Button onClick={onCreateNewProject} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Project
-        </Button>
-      </div>
+
 
       {/* Error Alert */}
       {error && (
@@ -318,17 +312,16 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
                         {project.status}
                       </Badge>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-slate-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
                       </div>
                       {project.deadline && (
-                        <div className={`flex items-center gap-1 ${
-                          getDeadlineStatus(project.deadline) === "overdue" ? "text-red-600" :
-                          getDeadlineStatus(project.deadline) === "approaching" ? "text-orange-600" : ""
-                        }`}>
+                        <div className={`flex items-center gap-1 ${getDeadlineStatus(project.deadline) === "overdue" ? "text-red-600" :
+                            getDeadlineStatus(project.deadline) === "approaching" ? "text-orange-600" : ""
+                          }`}>
                           <Clock className="h-4 w-4" />
                           <span>Deadline: {formatDate(project.deadline)}</span>
                           {getDeadlineStatus(project.deadline) === "overdue" && (
@@ -353,8 +346,8 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
                       <Edit className="h-4 w-4" />
                       Edit
                     </Button>
-                    
-                                         {project.status !== "Archived" && project.status !== "Completed" && (
+
+                    {ARCHIVABLE_STATUSES.includes(project.status) && (
                       <AlertDialog open={isArchiveDialogOpen && projectToArchive?.id === project.id} onOpenChange={(open) => {
                         if (!open) {
                           setIsArchiveDialogOpen(false);
@@ -408,7 +401,7 @@ export function ProjectList({ onProjectUpdated, onCreateNewProject }: ProjectLis
               Update the details for "{editingProject?.name}"
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(handleUpdateProject)} className="space-y-4">
               <FormField
