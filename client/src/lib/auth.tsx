@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authAPI } from "./supabase";
-import { User } from "@shared/schema";
+import { supabase, type User } from "./supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -18,13 +17,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     checkUser();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          // Get user profile data from our users table
+          const { data: profile, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            // If profile doesn't exist, sign out the user
+            await supabase.auth.signOut();
+            setUser(null);
+          } else if (profile) {
+            setUser(profile);
+          }
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkUser = async () => {
     try {
-      const { user } = await authAPI.getUser();
-      setUser(user);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error checking user:', error);
+          setUser(null);
+        } else if (profile) {
+          setUser(profile);
+        }
+      }
     } catch (error) {
+      console.error('Error checking user:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -32,17 +73,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { user } = await authAPI.signIn(email, password);
-    setUser(user);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) {
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string, role: string, name: string, rank?: string, specialization?: string) => {
-    const { user } = await authAPI.signUp(email, password, role, name, rank, specialization);
-    setUser(user);
+    // First, create the user in Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    
+    if (error) {
+      throw error;
+    }
+
+    if (data.user) {
+      // Create user profile in our users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: data.user.id,
+          name,
+          email,
+          role,
+          rank,
+          specialization,
+        });
+      
+      if (profileError) {
+        throw profileError;
+      }
+    }
   };
 
   const signOut = async () => {
-    await authAPI.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw error;
+    }
     setUser(null);
   };
 

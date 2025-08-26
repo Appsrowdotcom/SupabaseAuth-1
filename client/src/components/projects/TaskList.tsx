@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertTaskSchema } from "@shared/schema";
+import { insertTaskSchema } from "@/lib/schemas";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,7 +29,7 @@ import {
   Trash2,
   Users
 } from "lucide-react";
-import { Task, User as UserType, TaskStatus } from "@shared/schema";
+import { Task, User as UserType, TaskStatus } from "@/lib/schemas";
 
 interface TaskListProps {
   projectId: string;

@@ -1,74 +1,57 @@
-// Note: We're not using @supabase/supabase-js as per blueprint guidelines
-// Instead, we'll use our Express API endpoints for authentication
+import { createClient } from '@supabase/supabase-js'
 
-export const supabaseConfig = {
-  url: import.meta.env.VITE_SUPABASE_URL || "",
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
-};
+const supabaseUrl = 'https://hntwxvzuothnkhtahmoz.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudHd4dnp1b3RobmtodGFobW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4NTkzMTUsImV4cCI6MjA3MTQzNTMxNX0.sgxhv2tc0KWo_cx6eEWgUKBm7MI1sF3qJ_A5GbCT9nA'
 
-// Helper functions for our API-based auth
-export const authAPI = {
-  signUp: async (email: string, password: string, role: string, name: string, rank?: string, specialization?: string) => {
-    const response = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password, role, name, rank, specialization }),
-      credentials: "include",
-    });
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Signup failed");
-    }
+// Types matching the exact database schema
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: 'Admin' | 'User'
+  rank?: string
+  specialization?: string
+  created_at: string
+}
 
-    return response.json();
-  },
+export interface Project {
+  id: string
+  name: string
+  type: string
+  status: 'In Progress' | 'On Hold' | 'Completed'
+  admin_id: string
+  created_at: string
+  deadline?: string
+}
 
-  signIn: async (email: string, password: string) => {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
-    });
+export interface Task {
+  id: string
+  project_id: string
+  name: string
+  type: string
+  status: 'To Do' | 'In Progress' | 'On Hold' | 'Review' | 'Completed'
+  assigned_user_id?: string
+  estimate_hours?: number
+  created_at: string
+}
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Login failed");
-    }
+export interface WorkLog {
+  id: string
+  user_id: string
+  project_id: string
+  task_id?: string
+  start_time: string
+  end_time: string
+  note?: string
+}
 
-    return response.json();
-  },
-
-  signOut: async () => {
-    const response = await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error("Logout failed");
-    }
-
-    return response.json();
-  },
-
-  getUser: async () => {
-    const response = await fetch("/api/auth/me", {
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { user: null };
-      }
-      throw new Error("Failed to get user");
-    }
-
-    return response.json();
-  },
-};
+export interface StatusHistory {
+  id: string
+  entity_type: 'project' | 'task'
+  entity_id: string
+  status: string
+  updated_by: string
+  updated_at: string
+}

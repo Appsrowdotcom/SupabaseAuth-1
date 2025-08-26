@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
-import { UserRole } from "@shared/schema";
+import { UserRole } from "@/lib/schemas";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {

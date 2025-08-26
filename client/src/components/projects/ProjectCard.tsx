@@ -17,7 +17,7 @@ import {
   ArrowRight,
   Settings
 } from "lucide-react";
-import { Project, Task } from "@shared/schema";
+import { Project, Task } from "@/lib/schemas";
 import { format } from "date-fns";
 
 interface ProjectCardProps {

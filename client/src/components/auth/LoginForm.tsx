@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@shared/schema";
+import { loginSchema } from "@/lib/schemas";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertCircle } from "lucide-react";
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = {
+  email: string;
+  password: string;
+};
 
-export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export function LoginForm() {
   const { signIn } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -26,108 +28,93 @@ export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-    setError("");
-
     try {
+      setIsLoading(true);
+      setError(null);
       await signIn(data.email, data.password);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      // Success - user will be redirected by the auth context
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setError(error.message || "Failed to sign in. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-            <CheckCircle2 className="h-6 w-6 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-800">Welcome back</h2>
-          <p className="mt-2 text-slate-600">Sign in to your account</p>
-        </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-        <Card className="border border-slate-200">
-          <CardContent className="pt-6">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                    Email address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    data-testid="input-email"
-                    {...form.register("email")}
-                    className="appearance-none relative block w-full px-3 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm transition-colors duration-200"
-                    placeholder="Enter your email"
-                  />
-                  {form.formState.errors.email && (
-                    <p className="mt-1 text-sm text-red-600" data-testid="error-email">
-                      {form.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    data-testid="input-password"
-                    {...form.register("password")}
-                    className="appearance-none relative block w-full px-3 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm transition-colors duration-200"
-                    placeholder="Enter your password"
-                  />
-                  {form.formState.errors.password && (
-                    <p className="mt-1 text-sm text-red-600" data-testid="error-password">
-                      {form.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center" data-testid="error-message">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <Button
-                  type="submit"
+        {/* Email Field */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="email"
+                  placeholder="Enter your email"
                   disabled={isLoading}
-                  data-testid="button-signin"
-                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
-                >
-                  {isLoading && <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />}
-                  {isLoading ? "Signing in..." : "Sign in"}
-                </Button>
-              </div>
+                  className="h-11"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              <div className="text-center">
-                <p className="text-sm text-slate-600">
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={onSwitchToSignup}
-                    data-testid="link-signup"
-                    className="font-medium text-primary hover:text-blue-600 transition-colors"
-                  >
-                    Sign up
-                  </button>
-                </p>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        {/* Password Field */}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="password"
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                  className="h-11"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          className="w-full h-11"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing In...
+            </>
+          ) : (
+            "Sign In"
+          )}
+        </Button>
+
+        {/* Help Text */}
+        <div className="text-center text-sm text-slate-600">
+          <p>Don't have an account? Switch to the Sign Up tab above.</p>
+        </div>
+      </form>
+    </Form>
   );
 }
